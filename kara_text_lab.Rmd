@@ -7,24 +7,26 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir ='C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/MidWestArticles')
 ```
 
-## R Markdown
+```{r}
+library(tidyverse)
+#install.packages("tidytext")
+library(tidytext)
+#install.packages("ggwordcloud")
+library(ggwordcloud)
+library(textdata)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
+### Loading Articles
 
-## Including Plots
+```{r}
 
-You can also embed plots, for example:
+article1 <-read_lines("article1.txt")
+article1t <- tibble(article1)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+article2 <-read_lines("article2.txt")
+article2t <-tibble(article2)
+
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
