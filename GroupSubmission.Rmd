@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE )
 ```
 
 ---
@@ -26,24 +26,27 @@ h3 {
 }
 
 </style>
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE )
-```
-
-```{r}
+```{r, echo=FALSE}
 library(tidyverse)
 library(tidytext)
 library(ggwordcloud)
-library(gutenbergr)
 library(textdata)
 ```
 
-# Reading in Text for Different Regions
-```{r}
+# Process (pseudocode)
+
+1. Read text files from regional newspapers into R 
+2. Tokenized words of each text file to perform sentiment analysis using NRC, Bing, and AFINN lexicons
+3. Processed regional text file data into singular cells to create data frame of text grouped by regions
+4. Applied TF-IDF to data frame to determine the most impactful words in a given region
+
+# Sentiment Analysis 
+
+
+```{r, echo=FALSE}
 # Read in Text for Articles from Southern Region (Julia)
-south <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region")
+south <- read_lines("southern_region")
 south <- tibble(south)
 south$south <- as.character(south$south)
 
@@ -53,7 +56,7 @@ south <- south %>%
   count(word, sort=TRUE)
 
 # Read in Text for Articles from Western Region (Jess)
-west <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt")
+west <- read_lines("west_coast")
 west <- tibble(west)
 west$west <- as.character(west$west)
 
@@ -62,60 +65,79 @@ west <- west %>%
   anti_join(stop_words)%>% 
   count(word, sort=TRUE)
 
+setwd('C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/MidWestArticles')
 # Read in Text for Articles from Midwestern Region (Kara)
-midwest <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region")
+mypath = 'C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/MidWestArticles'
+
+#creating list of articles
+txt_files_ls = list.files(path=mypath, pattern="*.txt") 
+#reading articles 
+txt_files_df <- lapply(txt_files_ls, read_lines)
+# combining them into one df
+combined_df <- do.call("rbind", lapply(txt_files_df, as.data.frame))
+
+#defining a data preparation function
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))
+  #remove the white sapce, y:z is the range
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
+#applying data prep function to create one cell of words
+midwest <- data_prep(combined_df,'V1','V193')
 midwest <- tibble(midwest)
-midwest$midwest <- as.character(midwest$midwest)
+midwest2 <- midwest
 
 midwest <- midwest %>%
-  unnest_tokens(word, midwest)%>%
+  unnest_tokens(word,text)%>%
   anti_join(stop_words)%>% 
   count(word, sort=TRUE)
 ```
 
-# Sentiments for Different Regions
-```{r}
+## Bing Sentiment
+```{r, echo = FALSE}
 # Sentiments for Southern Region Articles
 south_sentiment_affin <- south %>%
   inner_join(get_sentiments("afinn"))
-View(south_sentiment_affin)
+
 
 south_sentiment_nrc <- south %>%
   inner_join(get_sentiments("nrc"))
-View(south_sentiment_nrc)
+
+
 
 south_sentiment_bing <- south %>%
   inner_join(get_sentiments("bing"))
-View(south_sentiment_bing)
+
 # Negative sentiments are 179 and Positive sentiments are 105
 
 # Sentiments for Western Region Articles
 west_sentiment_affin <- west %>%
   inner_join(get_sentiments("afinn"))
-View(west_sentiment_affin)
+
 
 west_sentiment_nrc <- west %>%
   inner_join(get_sentiments("nrc"))
-View(west_sentiment_nrc)
+
 
 west_sentiment_bing <- west %>%
   inner_join(get_sentiments("bing"))
-View(west_sentiment_bing)
+
 
 # Negative sentiments are 161 and Positive sentiments are 81
 
 # Sentiments for Midwestern Region Article
 midwest_sentiment_affin <- midwest %>%
   inner_join(get_sentiments("afinn"))
-View(midwest_sentiment_affin)
+
 
 midwest_sentiment_nrc <- midwest %>%
   inner_join(get_sentiments("nrc"))
-View(midwest_sentiment_nrc)
+
 
 midwest_sentiment_bing <- midwest %>%
   inner_join(get_sentiments("bing"))
-View(midwest_sentiment_bing)
+
 
 # Negative sentiments are 159 and Positive sentiments are 79
 
@@ -124,15 +146,25 @@ table(south_sentiment_bing$sentiment)
 table(west_sentiment_bing$sentiment)
 table(midwest_sentiment_bing$sentiment)
 
+```
+From the Bing lexicon we can see that all regions skew towards negative sentiment. Both the Midwest and Western regions have roughly 33% positive sentiment while the Southern region has a slightly higher percentage at 36%. 
+
+## NRC analysis 
+
+```{R, echo=FALSE}
+
 table(south_sentiment_nrc$sentiment)
 table(west_sentiment_nrc$sentiment)
 table(midwest_sentiment_nrc$sentiment)
 ```
 
-Conclusion: For the Southern Region, I saw there were 
+Similar to the Bing lexicon, the NRC lexicon has consistent results across each region. Interestingly, NRC measured positive sentiment at roughly 42% for all regions, which is 10% greater than that measured by Bing. 
 
-# Plot of Sentiments for Different Regions
-```{r}
+Using the Bing and NRC lexicon currently indicates that sentiment across the US for climate change is relatively homogenous and skews negatively. 
+
+
+## AFFIN analysis
+```{r, echo=FALSE}
 # Plot of Southern Region's Sentiment Range
 ggplot(data = south_sentiment_affin, 
        aes(x=value)
@@ -158,9 +190,22 @@ ggplot(data = midwest_sentiment_affin,
   theme_minimal()
 ```
 
+The AFFIN analysis emphasizes the findings from the previous lexicons: the plots have very similar distributions indicating that climate change is associated with negative sentiment. The AFFIN analysis does differ from the previous findings in that it indicates the Western is more positive compared to the other two (a larger 1 column). This could indicate that less effort needs to be put into climate change efforts in the Western region. 
 
 # Word Clouds for Different Regions
-```{r}
+```{r, echo =FALSE}
+# Removing words that will not aid in sentiment understanding
+custom_sw <- tibble(word =c("climate","change","global","warming"))
+
+south <- south%>%
+      anti_join(custom_sw, by="word")
+
+west <- west%>%
+      anti_join(custom_sw, by="word")
+
+midwest <- midwest%>%
+      anti_join(custom_sw, by="word")
+
 # Word Cloud for Southern Region
 set.seed(42)
 ggplot(south[1:50,], aes(label = word, size = n)
@@ -182,33 +227,33 @@ ggplot(midwest[1:50,], aes(label = word, size = n)
   geom_text_wordcloud() +
   theme_minimal()
 ```
-Conclusion: For the Southern Region, words like "climate", "change", "global", "warming", "energy", "republicans", "conservatives", and "carbon" were among some of the more common occurring words in the articles from this region. For word sentiments for the Southern Region, there were 179 negative sentiments and 105 positive sentiments. This shows that there is a bit more negative language regarding climate change. The positive sentiments were higher than I expected, however. The reason the positive sentiments could be a bit higher may be due to the fact that the Southern region does not see climate change as an important of an issue compared to other regions. Because my region was the South, which does a large Republican population, I was not surprised to see the words "republicans" and "conservatives" occur often. I think seeing these words show that climate change is more of a political issue in this region. For example, the word cloud for the Western region did not have many words with a political connotation. 
+
+Unlike the previous lexicon analysis, using word clouds we can start to see distinct differences between the regions. The southern word cloud is much more centered on politics with the words "republicans" and "conservatives" standing out. On the other hand, the Western word cloud is much more focused on natural phenomenon with words like "heat", "weather", and "temperatures". Similar to the Western word cloud, the Midwestern word cloud is focused on nature with words like "forest", "tress", and "birds" being prominent. However, the Midwestern word cloud differentiates itself from the other two word clouds with the prominence of "scientists" and "researchers" which could indicate a more scientific perspective of climate change.
 
 # Term Frequency - Inverse Document Frequency for Regions
-```{r}
+```{r, echo=FALSE}
 # Term Frequency - Inverse Document Frequency (tf-idf)
+south <- read_lines("southern_region")
+south <- tibble(south)
 
-south_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region"))
+west <- read_lines("west_coast")
+west <- tibble(west)
 
-west_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt"))
 
-midwest_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region"))
 
 data_prep <- function(x,y,z){
   i <- as_tibble(t(x))
   ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
 }
 
-south_bag <- data_prep(south_raw[1:371,1],'V1','V371')
+south_bag <- data_prep(south[1:371,1],'V1','V371')
 
-west_bag <- data_prep(west_raw,'V1','V141')
-
-midwest_bag <- data_prep(midwest_raw,'V1','V204')
+west_bag <- data_prep(west,'V1','V141')
 
 region <- c("South","West","Midwest")
 
 
-tf_idf_text <- tibble(region,text=t(tibble(south_bag,west_bag,midwest_bag,.name_repair = "universal")))
+tf_idf_text <- tibble(region,text=t(tibble(south_bag,west_bag,midwest2,.name_repair = "universal")))
 
 View(tf_idf_text)
 
@@ -241,4 +286,21 @@ fig <- ggplot(top10, aes(tf_idf, word, fill = tf_idf)) +
 fig
 ```
 
-# Discussion 
+Looking more closely at the top 10 most impactful words per region we can get an initial idea of the type of campaign we will want to run to target people in these regions.
+
+For the Midwestern region many of the words ("birds", "forest", "hill", ect.) have to do with things in the natural world. With this information our campaign should emphasize the impacts of climate change on the environment around us.
+
+On the other hand, the Southern region is much more occupied with political themes like "conservatives", "backer", and "money". The Southern campaign should focus on highlighting political iniatives.
+
+The Western region is focused on the immediate natural environment shown through the words "Joshua" (likely from Joshua Tree) and "Mojave". Therefore, the Western campaign should focus specifically on the natural world in California and emphasize climate change impacts on beloved National Parks. 
+
+
+# Recommendation
+
+While sentiment analysis using the Bing, NRC, and AFINN lexicons indicated a relatively homogeneous distribution of sentiment across U.S. regions, word specific analysis using word clouds and TF-IDF isolated regional themes which could be used to inform targeted campaigns.
+
+For the Southern region, both the word cloud and TF-IDF indicated a more political perspective on climate change. Our organization could therefore try to change Southern perspectives and run campaigns to make climate change a non-bipartisan issue. 
+
+For the Western region, the topic of climate change centered around the natural world. From the word cloud we saw an emphasis on "heat", "weather", and "temperatures" likely a reflection of the wildfires that have plagued the west coast. From the TF-IDF we also saw a focus on California specific natural areas like the Mojave, Joshua Tree, and the Valley. Because of the West's focus on issues close to home, our organization could focus a campaign centered around the effects of climate change on beloved national parks.
+
+The Midwestern region had a similar focus on the natural world like the West with prevalent words being "trees", "birds", and "forest". Unlike the other regions the Midwest word cloud had a focus on "scientists" and "research". This indicates that the campaign for the Midwestern region could benefit from the testimonies of scientists and researchers. The campaign should emphasize the science behind climate change.  
