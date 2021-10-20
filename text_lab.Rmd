@@ -2,11 +2,35 @@
 title: "Text Mining Lab"
 author: "Julia Burek"
 date: "10/20/2021"
-output: html_document
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+<style>
+h1.title {
+  font-size: 30px;
+}
+h1 {
+  font-size: 26px;
+}
+h2 {
+  font-size: 22px;
+}
+h3 { 
+  font-size: 18px;
+}
+
+</style>
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE )
 ```
 
 ```{r}
@@ -17,22 +41,42 @@ library(gutenbergr)
 library(textdata)
 ```
 
+# Reading in Text for Different Regions
 ```{r}
-# Read in Text for Articles from Southern Region
+# Read in Text for Articles from Southern Region (Julia)
 south <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region")
 south <- tibble(south)
 south$south <- as.character(south$south)
-
-View(south)
 
 south <- south %>%
   unnest_tokens(word, south)%>%
   anti_join(stop_words)%>% 
   count(word, sort=TRUE)
 
-View(south)
+# Read in Text for Articles from Western Region (Jess)
+west <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt")
+west <- tibble(west)
+west$west <- as.character(west$west)
 
-# Sentiments for Southern Region Article
+west <- west %>%
+  unnest_tokens(word, west)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+
+# Read in Text for Articles from Midwestern Region (Kara)
+midwest <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region")
+midwest <- tibble(midwest)
+midwest$midwest <- as.character(midwest$midwest)
+
+midwest <- midwest %>%
+  unnest_tokens(word, midwest)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+```
+
+# Sentiments for Different Regions
+```{r}
+# Sentiments for Southern Region Articles
 south_sentiment_affin <- south %>%
   inner_join(get_sentiments("afinn"))
 View(south_sentiment_affin)
@@ -44,11 +88,51 @@ View(south_sentiment_nrc)
 south_sentiment_bing <- south %>%
   inner_join(get_sentiments("bing"))
 View(south_sentiment_bing)
-
-table(south_sentiment_bing$sentiment)
 # Negative sentiments are 179 and Positive sentiments are 105
+
+# Sentiments for Western Region Articles
+west_sentiment_affin <- west %>%
+  inner_join(get_sentiments("afinn"))
+View(west_sentiment_affin)
+
+west_sentiment_nrc <- west %>%
+  inner_join(get_sentiments("nrc"))
+View(west_sentiment_nrc)
+
+west_sentiment_bing <- west %>%
+  inner_join(get_sentiments("bing"))
+View(west_sentiment_bing)
+
+# Negative sentiments are 161 and Positive sentiments are 81
+
+# Sentiments for Midwestern Region Article
+midwest_sentiment_affin <- midwest %>%
+  inner_join(get_sentiments("afinn"))
+View(midwest_sentiment_affin)
+
+midwest_sentiment_nrc <- midwest %>%
+  inner_join(get_sentiments("nrc"))
+View(midwest_sentiment_nrc)
+
+midwest_sentiment_bing <- midwest %>%
+  inner_join(get_sentiments("bing"))
+View(midwest_sentiment_bing)
+
+# Negative sentiments are 159 and Positive sentiments are 79
+
+# Comparison of Regions
+table(south_sentiment_bing$sentiment)
+table(west_sentiment_bing$sentiment)
+table(midwest_sentiment_bing$sentiment)
+
+table(south_sentiment_nrc$sentiment)
+table(west_sentiment_nrc$sentiment)
+table(midwest_sentiment_nrc$sentiment)
 ```
 
+Conclusion: For the Southern Region, I saw there were 
+
+# Plot of Sentiments for Different Regions
 ```{r}
 # Plot of Southern Region's Sentiment Range
 ggplot(data = south_sentiment_affin, 
@@ -57,27 +141,108 @@ ggplot(data = south_sentiment_affin,
   geom_histogram(bins=20)+
   ggtitle("Southern Region Sentiment Range")+
   theme_minimal()
+
+# Plot of Western Region's Sentiment Range
+ggplot(data = west_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Western Region Sentiment Range")+
+  theme_minimal()
+
+# Plot of Midwestern Region's Sentiment Range
+ggplot(data = midwest_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Midwestern Region Sentiment Range")+
+  theme_minimal()
 ```
 
+
+# Word Clouds for Different Regions
 ```{r}
-# Word Cloud
+# Word Cloud for Southern Region
 set.seed(42)
 ggplot(south[1:50,], aes(label = word, size = n)
        ) +
   geom_text_wordcloud() +
   theme_minimal()
-```
 
+# Word Cloud for Western Region
+set.seed(42)
+ggplot(west[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+
+# Word Cloud for Midwestern Region
+set.seed(42)
+ggplot(midwest[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+```
+Conclusion: For the Southern Region, words like "climate", "change", "global", "warming", "energy", "republicans", "conservatives", and "carbon" were among some of the more common occurring words in the articles from this region. For word sentiments for the Southern Region, there were 179 negative sentiments and 105 positive sentiments. This shows that there is a bit more negative language regarding climate change. The positive sentiments were higher than I expected, however. The reason the positive sentiments could be a bit higher may be due to the fact that the Southern region does not see climate change as an important of an issue compared to other regions. Because my region was the South, which does a large Republican population, I was not surprised to see the words "republicans" and "conservatives" occur often. I think seeing these words show that climate change is more of a political issue in this region. For example, the word cloud for the Western region did not have many words with a political connotation. 
+
+# Term Frequency - Inverse Document Frequency for Regions
 ```{r}
 # Term Frequency - Inverse Document Frequency (tf-idf)
+
 south_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region"))
+
+west_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt"))
+
+midwest_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region"))
 
 data_prep <- function(x,y,z){
   i <- as_tibble(t(x))
   ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
 }
 
+south_bag <- data_prep(south_raw[1:371,1],'V1','V371')
+
+west_bag <- data_prep(west_raw,'V1','V141')
+
+midwest_bag <- data_prep(midwest_raw,'V1','V204')
+
+region <- c("South","West","Midwest")
+
+
+tf_idf_text <- tibble(region,text=t(tibble(south_bag,west_bag,midwest_bag,.name_repair = "universal")))
+
+View(tf_idf_text)
+
+word_count <- tf_idf_text %>%
+  unnest_tokens(word, text) %>%
+  count(region, word, sort = TRUE)
+
+
+total_words <- word_count %>% 
+  group_by(region) %>% 
+  summarize(total = sum(n))
+
+region_words <- left_join(word_count, total_words)
+
+View(region_words)
+
+region_words <- region_words %>%
+  bind_tf_idf(word, region, n)
+
+top10 <- region_words%>%
+  arrange(desc(tf_idf))%>%
+  group_by(region)%>%
+  slice(1:10)
+
+fig <- ggplot(top10, aes(tf_idf, word, fill = tf_idf)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Regions and Most Impactful Words",
+       y = NULL)
+fig
 ```
+Conclusion:
+
 
 Congratulations you've successfully transferred from being a NBA 'quant' scout to a consultant specializing in US national sentiment! You've been hired by a non-profit in secret to track the level of support nationally and regionally for the Climate Change issues. The goal is to get a general idea of patterns associated with articles being written on the broad topic of Climate Change (you can also choose to select a sub-topic). In doing so your data science team has decided to explore periodicals from around the country in a effort to track the relative positive or negative sentiment and word frequencies. Luckily you have access to a world class library search engine call LexusNexus (NexusUni) that provides access to newspapers from around the country dating back decades. You'll first need to decided what words you want to track and what time might be interesting to begin your search. 
 
