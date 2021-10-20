@@ -1,12 +1,82 @@
 ---
-title: "text_lab"
-author: "Brian Wright"
-date: "9/30/2020"
+title: "Text Mining Lab"
+author: "Julia Burek"
+date: "10/20/2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(ggwordcloud)
+library(gutenbergr)
+library(textdata)
+```
+
+```{r}
+# Read in Text for Articles from Southern Region
+south <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region")
+south <- tibble(south)
+south$south <- as.character(south$south)
+
+View(south)
+
+south <- south %>%
+  unnest_tokens(word, south)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+
+View(south)
+
+# Sentiments for Southern Region Article
+south_sentiment_affin <- south %>%
+  inner_join(get_sentiments("afinn"))
+View(south_sentiment_affin)
+
+south_sentiment_nrc <- south %>%
+  inner_join(get_sentiments("nrc"))
+View(south_sentiment_nrc)
+
+south_sentiment_bing <- south %>%
+  inner_join(get_sentiments("bing"))
+View(south_sentiment_bing)
+
+table(south_sentiment_bing$sentiment)
+# Negative sentiments are 179 and Positive sentiments are 105
+```
+
+```{r}
+# Plot of Southern Region's Sentiment Range
+ggplot(data = south_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Southern Region Sentiment Range")+
+  theme_minimal()
+```
+
+```{r}
+# Word Cloud
+set.seed(42)
+ggplot(south[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+```
+
+```{r}
+# Term Frequency - Inverse Document Frequency (tf-idf)
+south_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region"))
+
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
 ```
 
 Congratulations you've successfully transferred from being a NBA 'quant' scout to a consultant specializing in US national sentiment! You've been hired by a non-profit in secret to track the level of support nationally and regionally for the Climate Change issues. The goal is to get a general idea of patterns associated with articles being written on the broad topic of Climate Change (you can also choose to select a sub-topic). In doing so your data science team has decided to explore periodicals from around the country in a effort to track the relative positive or negative sentiment and word frequencies. Luckily you have access to a world class library search engine call LexusNexus (NexusUni) that provides access to newspapers from around the country dating back decades. You'll first need to decided what words you want to track and what time might be interesting to begin your search. 
