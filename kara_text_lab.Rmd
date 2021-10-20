@@ -25,7 +25,7 @@ library(DT)
 
 Using Lexis Nexis, 10 articles from Midwestern newspapers were selected. These articles were saved as text files. The data was loaded into R and then combined into one data frame to perform sentiment analysis and develop word clouds.
 
-Below is a graph depicting the top 20 most prevalent words after removing stop words and the words "climate", "change", "global", and "warming". These additional words were removed because they are the focus of our investigation and we are looking for the sentiment around them.
+Below is a graph depicting the top 20 most prevalent words after removing stop words and the words "climate", "change", "global", and "warming". These additional words were removed because they are the topic of interest and we are investigating the sentiment around them, not from them.
 
 ```{r, echo=FALSE}
 # setting path 
@@ -113,7 +113,7 @@ fig <- ggplot(bw, aes(n, word, fill = sentiment)) +
        y = NULL)
 
 
-
+fig
 ```
 
 This is also emphasized when looking at the frequency of terms where the the number of negative terms is double that of the positive. 
@@ -124,7 +124,7 @@ table(sbing$sentiment)
 
 #### NRC Lexicon
 
-Interestingly the NRC lexicon has a much different distribution of positive and negative sentiment with the positive exceeding the negative. However, negative emotions like anger, fear, and sadness are quite prevalent which is more aligned with the results from the bing lexicon.
+Interestingly the NRC lexicon has a much different distribution of positive and negative sentiment with the positive exceeding the negative. However, negative emotions like anger, fear, and sadness are quite prevalent which is aligned with the results from the Bing lexicon.
 
 ```{r, echo=FALSE}
 table(snrc$sentiment)
@@ -141,7 +141,7 @@ fig <- ggplot(data = saffin,
   geom_histogram()+
   ggtitle("Midwestern Sentiment Range")+
   theme_minimal()
-
+fig
 ```
 
 #### Word Cloud
@@ -156,10 +156,67 @@ ggplot(ah_count_sw[1:50,], aes(label = word, size = n)
   theme_minimal()
 ```
 
+#### Regional TF-IDF
 
+To better understand the sentiment distribution on a national level, 3 major regions were considered: Southern, Midwestern, and Western. Articles from major newspapers in each of these regions were compiled into one large text file. The 3 regions' text were then compiled into a data frame to perform a term frequency individual document frequency (TF-IDF) analysis. In this analysis the corpus is considered to be the newspaper articles selected nationally, while the individual documents are considered to be the articles collated from a particular region.
 
+Using TF-IDF scores below is a plot showing the top 10 most impactful words in each region. Interestingly, there is no overlap between the three regions. This indicates that we may need to have very targeted campaigns for each region.
 
+```{r, echo=FALSE}
+setwd('C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/')
+#loading data 
+west <- tibble(read_lines('west_coast'))
+south <-tibble(read_lines('southern_region'))
 
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))
+  #remove the white sapce, y:z is the range
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
+west_bag <- data_prep(west, 'V1','V141')
+midwest_bag <- articles
+south_bag <-data_prep(south,'V1','V371')
+
+regions <- c("Western", "Midwestern","Southern")
+
+text_df <-tibble(regions, text = t(tibble(west_bag,midwest_bag,south_bag,.name_repair="universal")))
+
+word_ct = text_df%>%
+  unnest_tokens(word, text) %>%
+  count(regions, word, sort = TRUE)
+
+total_words <- word_ct %>% 
+  group_by(regions) %>% 
+  summarize(total = sum(n))
+
+words <- left_join(word_ct,total_words)
+view(words)
+
+reg_words <- words %>%
+  bind_tf_idf(word, regions, n)
+view(reg_words)
+
+top10 <- reg_words%>%
+  arrange(desc(tf_idf))%>%
+  group_by(regions)%>%
+  slice(1:10)
+
+fig <- ggplot(top10, aes(tf_idf, word, fill = tf_idf)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~regions, scales = "free_y") +
+  labs(x = "Regions and Most Impactful Words",
+       y = NULL)
+fig
+```
+
+Looking more closely at the top 10 most impactful words per region we can get an initial idea of the type of campaign we will want to run to target people in these regions.
+
+For the Midwestern region many of the words ("birds", "forest", "hill", ect.) have to do with things in the natural world. With this information our campaign should emphasize the impacts of climate change on the environment around us.
+
+On the other hand, the Southern region is much more occupied with political themes like "conservatives", "backer", and "money". The Southern campaign should focus on highlighting political iniatives.
+
+The Western region is focused on the immediate natural environment shown through the words "Joshua" (likely from Joshua Tree) and "Mojave". Therefore, the Western campaign should focus specifically on the natural world in California and emphasize climate change impacts on beloved National Parks. 
 
 
 
