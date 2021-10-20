@@ -6,27 +6,160 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE,message = FALSE, warning = FALSE)
 knitr::opts_knit$set(root.dir ='C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/MidWestArticles')
 ```
 
-```{r}
+```{r, echo=FALSE, include=FALSE}
 library(tidyverse)
 #install.packages("tidytext")
 library(tidytext)
 #install.packages("ggwordcloud")
 library(ggwordcloud)
 library(textdata)
+library(DT)
 
 ```
-### Loading Articles
+
+### Midwestern Sentiment Analysis
+
+Using Lexis Nexis, 10 articles from Midwestern newspapers were selected. These articles were saved as text files. The data was loaded into R and then combined into one data frame to perform sentiment analysis and develop word clouds.
+
+Below is a graph depicting the top 20 most prevalent words after removing stop words and the words "climate", "change", "global", and "warming". These additional words were removed because they are the focus of our investigation and we are looking for the sentiment around them.
+
+```{r, echo=FALSE}
+# setting path 
+mypath = 'C:/Users/Student/OneDrive - University of Virginia/Documents/R/Text-Mining-Lab/MidWestArticles'
+
+#creating list of articles
+txt_files_ls = list.files(path=mypath, pattern="*.txt") 
+
+#reading articles 
+txt_files_df <- lapply(txt_files_ls, read_lines)
+
+
+# combining them into one df
+combined_df <- do.call("rbind", lapply(txt_files_df, as.data.frame))
+
+#defining a data preparation function
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))
+  #remove the white sapce, y:z is the range
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
+#applying data prep function to create one cell of words
+articles <- data_prep(combined_df,'V1','V193')
+
+
+#tokenizing words and removing stopping words
+ah_word <- articles %>%
+  unnest_tokens(word, text) 
+
+ah_word_sw <- ah_word%>%
+      anti_join(stop_words)
+
+#removing the words in phrases "climate change" and "global warming" since it is the sentiment of these concepts that we want to analyze 
+
+custom_sw <- tibble(word =c("climate","change","global","warming"))
+
+ah_word_sw <- ah_word_sw%>%
+      anti_join(custom_sw, by="word")
+
+ah_count_sw <- ah_word_sw %>%
+  count(word, sort=TRUE)
+
+ah_count_sw$word <- as.factor(ah_count_sw$word)
+
+ggplot(
+  data = ah_count_sw[1:20,],
+  aes(x = fct_reorder(word,n),
+      y = n)
+  ) + 
+  geom_col() + 
+  coord_flip()+
+  theme_light()
+  
+```
+
+With the data now cleaned and the words tokenized, sentiment analysis was then performed using AFINN, NRC, and Bing lexicons provided through the TidyText package.
+
+```{r, echo=FALSE}
+saffin <- ah_count_sw%>%
+  inner_join(get_sentiments("afinn"))
+
+sbing <-ah_count_sw%>%
+  inner_join(get_sentiments("bing"))
+
+snrc <-ah_count_sw%>%
+  inner_join(get_sentiments("nrc"))
+
+```
+#### Bing Lexicon
+
+Below is a graph showing the top 10 most prevalent words in Bing's classification of "positive" and negative "sentiment". From these top 10 words it appears that climate change is more associated with negative sentiment as the most prominent words are ones like "hard", "threat", and "risk". 
 
 ```{r}
+bw <- sbing %>%
+    arrange(desc(n))%>%
+    group_by(sentiment)%>%
+    slice(1:10)
 
-article1 <-read_lines("article1.txt")
-article1t <- tibble(article1)
 
-article2 <-read_lines("article2.txt")
-article2t <-tibble(article2)
+fig <- ggplot(bw, aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+
+
 
 ```
+
+This is also emphasized when looking at the frequency of terms where the the number of negative terms is double that of the positive. 
+
+```{r, echo=FALSE}
+table(sbing$sentiment)
+```
+
+#### NRC Lexicon
+
+Interestingly the NRC lexicon has a much different distribution of positive and negative sentiment with the positive exceeding the negative. However, negative emotions like anger, fear, and sadness are quite prevalent which is more aligned with the results from the bing lexicon.
+
+```{r, echo=FALSE}
+table(snrc$sentiment)
+```
+
+#### AFINN
+
+The AFINN lexicon had results consistent with the Bing lexicon with the histogram skewed towards negative values indicating a more negative sentiment towards climate change.
+
+```{r, echo=FALSE}
+fig <- ggplot(data = saffin, 
+       aes(x=value)
+        )+
+  geom_histogram()+
+  ggtitle("Midwestern Sentiment Range")+
+  theme_minimal()
+
+```
+
+#### Word Cloud
+
+Below is a word cloud representing the top 50 most prevalent words. From the word cloud we can see that much of the news around climate change is centered around three key aspects: people ("people", "human"), nature ("forest", "trees", "birds"), and science ("research", "scientists"). I especially found it interesting how large "people" and "human" are compared to the other words. I feel like this reflects the tendency to place human priorities above the environment which is a major contributing factor to climate change. 
+
+```{r, echo=FALSE}
+set.seed(42)
+ggplot(ah_count_sw[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
