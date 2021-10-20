@@ -1,0 +1,30 @@
+---
+title: "Group Submission"
+author: "Jess, Julia, and Kara"
+date: "10/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Data
+```{r}
+
+```
+
+## Region Sentiment Analysis 
+
+```{r}
+
+```
+
+## Regional TF-IDF
+
+```{r}
+
+```
+
+
+## Discussion 
