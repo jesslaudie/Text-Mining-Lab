@@ -1,0 +1,241 @@
+---
+title: "Text Mining Lab"
+author: "Julia Burek"
+date: "10/20/2021"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+<style>
+h1.title {
+  font-size: 30px;
+}
+h1 {
+  font-size: 26px;
+}
+h2 {
+  font-size: 22px;
+}
+h3 { 
+  font-size: 18px;
+}
+
+</style>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE )
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(ggwordcloud)
+library(gutenbergr)
+library(textdata)
+```
+
+# Reading in Text for Different Regions
+```{r}
+# Read in Text for Articles from Southern Region (Julia)
+south <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region")
+south <- tibble(south)
+south$south <- as.character(south$south)
+
+south <- south %>%
+  unnest_tokens(word, south)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+
+# Read in Text for Articles from Western Region (Jess)
+west <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt")
+west <- tibble(west)
+west$west <- as.character(west$west)
+
+west <- west %>%
+  unnest_tokens(word, west)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+
+# Read in Text for Articles from Midwestern Region (Kara)
+midwest <- read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region")
+midwest <- tibble(midwest)
+midwest$midwest <- as.character(midwest$midwest)
+
+midwest <- midwest %>%
+  unnest_tokens(word, midwest)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+```
+
+# Sentiments for Different Regions
+```{r}
+# Sentiments for Southern Region Articles
+south_sentiment_affin <- south %>%
+  inner_join(get_sentiments("afinn"))
+View(south_sentiment_affin)
+
+south_sentiment_nrc <- south %>%
+  inner_join(get_sentiments("nrc"))
+View(south_sentiment_nrc)
+
+south_sentiment_bing <- south %>%
+  inner_join(get_sentiments("bing"))
+View(south_sentiment_bing)
+# Negative sentiments are 179 and Positive sentiments are 105
+
+# Sentiments for Western Region Articles
+west_sentiment_affin <- west %>%
+  inner_join(get_sentiments("afinn"))
+View(west_sentiment_affin)
+
+west_sentiment_nrc <- west %>%
+  inner_join(get_sentiments("nrc"))
+View(west_sentiment_nrc)
+
+west_sentiment_bing <- west %>%
+  inner_join(get_sentiments("bing"))
+View(west_sentiment_bing)
+
+# Negative sentiments are 161 and Positive sentiments are 81
+
+# Sentiments for Midwestern Region Article
+midwest_sentiment_affin <- midwest %>%
+  inner_join(get_sentiments("afinn"))
+View(midwest_sentiment_affin)
+
+midwest_sentiment_nrc <- midwest %>%
+  inner_join(get_sentiments("nrc"))
+View(midwest_sentiment_nrc)
+
+midwest_sentiment_bing <- midwest %>%
+  inner_join(get_sentiments("bing"))
+View(midwest_sentiment_bing)
+
+# Negative sentiments are 159 and Positive sentiments are 79
+
+# Comparison of Regions
+table(south_sentiment_bing$sentiment)
+table(west_sentiment_bing$sentiment)
+table(midwest_sentiment_bing$sentiment)
+
+table(south_sentiment_nrc$sentiment)
+table(west_sentiment_nrc$sentiment)
+table(midwest_sentiment_nrc$sentiment)
+```
+
+# Plot of Sentiments for Different Regions
+```{r}
+# Plot of Southern Region's Sentiment Range
+ggplot(data = south_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Southern Region Sentiment Range")+
+  theme_minimal()
+
+# Plot of Western Region's Sentiment Range
+ggplot(data = west_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Western Region Sentiment Range")+
+  theme_minimal()
+
+# Plot of Midwestern Region's Sentiment Range
+ggplot(data = midwest_sentiment_affin, 
+       aes(x=value)
+        )+
+  geom_histogram(bins=20)+
+  ggtitle("Midwestern Region Sentiment Range")+
+  theme_minimal()
+```
+
+
+# Word Clouds for Different Regions
+```{r}
+# Word Cloud for Southern Region
+set.seed(42)
+ggplot(south[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+
+# Word Cloud for Western Region
+set.seed(42)
+ggplot(west[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+
+# Word Cloud for Midwestern Region
+set.seed(42)
+ggplot(midwest[1:50,], aes(label = word, size = n)
+       ) +
+  geom_text_wordcloud() +
+  theme_minimal()
+```
+**Conclusion**: For the Southern Region, words like "climate", "change", "global", "warming", "energy", "republicans", "conservatives", and "carbon", were among some of the more common occurring words in the articles from this region. For word sentiments for the Southern Region, there were 179 negative sentiments and 105 positive sentiments. This shows that there is a bit more negative language regarding climate change. The positive sentiment number was a bit higher than I expected, however. The reason the positive sentiment could be a bit higher may be due to the fact that some individuals in the Southern region do not see climate change as an important of an issue compared to other regions. The Southern region has several Red states and despite changing beliefs over the years, Republicans have historically denied the gravity of climate change. This is why I think there is not as much of a difference between negative and positive sentiment compared to that of the Western region, for example. For many Republicans, climate change is viewed as a political issue. For this reason, I was not surprised to see the words "republicans" and "conservatives" in larger text on the word cloud. Many Republican politicians, such as President Donald Trump, have used concerning language about climate change, denying or downplaying the gravity of climate change. Some of these politicians have even blocked or rolled back policies to combat climate change. For the Southern region, which has a large Republican population, many individuals continue to see climate change as a political issue which is supported by the text mining I performed for this region. While I do think more people are becoming less and less skeptical of climate change, there is still a lot more work to do to combat climate change and change people's denial of the issue. For future analysis, it could be interesting to look at how sentiments have changed over time towards climate change, especially in the Southern region where there is more skepticism about climate change than other regions.
+
+# Term Frequency - Inverse Document Frequency for Regions
+```{r}
+# Term Frequency - Inverse Document Frequency (tf-idf)
+
+south_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/southern_region"))
+
+west_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/west_coast.txt"))
+
+midwest_raw <- as.tibble(read_lines("~/Desktop/DS3001/DS 3001/07_text_mining/midwest_region"))
+
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
+south_bag <- data_prep(south_raw[1:371,1],'V1','V371')
+
+west_bag <- data_prep(west_raw,'V1','V141')
+
+midwest_bag <- data_prep(midwest_raw,'V1','V204')
+
+region <- c("South","West","Midwest")
+
+
+tf_idf_text <- tibble(region,text=t(tibble(south_bag,west_bag,midwest_bag,.name_repair = "universal")))
+
+View(tf_idf_text)
+
+word_count <- tf_idf_text %>%
+  unnest_tokens(word, text) %>%
+  count(region, word, sort = TRUE)
+
+
+total_words <- word_count %>% 
+  group_by(region) %>% 
+  summarize(total = sum(n))
+
+region_words <- left_join(word_count, total_words)
+
+region_words <- region_words %>%
+  bind_tf_idf(word, region, n)
+
+region_words
+
+top10 <- region_words%>%
+  arrange(desc(tf_idf))%>%
+  group_by(region)%>%
+  slice(1:10)
+
+fig <- ggplot(top10, aes(tf_idf, word, fill = tf_idf)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Regions and Most Impactful Words",
+       y = NULL)
+fig
+```
