@@ -44,7 +44,7 @@ library(textdata)
 # Sentiment Analysis 
 
 
-```{r, echo=FALSE}
+```{r}
 # Read in Text for Articles from Southern Region (Julia)
 south <- read_lines("southern_region")
 south <- tibble(south)
@@ -142,19 +142,42 @@ midwest_sentiment_bing <- midwest %>%
 # Negative sentiments are 159 and Positive sentiments are 79
 
 # Comparison of Regions
-table(south_sentiment_bing$sentiment)
-table(west_sentiment_bing$sentiment)
-table(midwest_sentiment_bing$sentiment)
 
 ```
+
+Southern Region:
+```{r,echo=FALSE}
+table(south_sentiment_bing$sentiment)
+```
+
+Western Region:
+```{R,echo=FALSE}
+
+table(west_sentiment_bing$sentiment)
+
+```
+
+Midwestern Region:
+```{r, echo=FALSE}
+table(midwest_sentiment_bing$sentiment)
+```
+
 From the Bing lexicon we can see that all regions skew towards negative sentiment. Both the Midwest and Western regions have roughly 33% positive sentiment while the Southern region has a slightly higher percentage at 36%. 
 
 ## NRC analysis 
-
-```{R, echo=FALSE}
-
+Southern Region:
+```{r,echo=FALSE}
 table(south_sentiment_nrc$sentiment)
+```
+
+Western Region:
+```{R,echo=FALSE}
 table(west_sentiment_nrc$sentiment)
+
+```
+
+Midwestern Region:
+```{r,echo=FALSE}
 table(midwest_sentiment_nrc$sentiment)
 ```
 
@@ -164,7 +187,7 @@ Using the Bing and NRC lexicon currently indicates that sentiment across the US 
 
 
 ## AFFIN analysis
-```{r, echo=FALSE}
+```{r}
 # Plot of Southern Region's Sentiment Range
 ggplot(data = south_sentiment_affin, 
        aes(x=value)
@@ -193,7 +216,7 @@ ggplot(data = midwest_sentiment_affin,
 The AFFIN analysis emphasizes the findings from the previous lexicons: the plots have very similar distributions indicating that climate change is associated with negative sentiment. The AFFIN analysis does differ from the previous findings in that it indicates the Western is more positive compared to the other two (a larger 1 column). This could indicate that less effort needs to be put into climate change efforts in the Western region. 
 
 # Word Clouds for Different Regions
-```{r, echo =FALSE}
+```{r}
 # Removing words that will not aid in sentiment understanding
 custom_sw <- tibble(word =c("climate","change","global","warming"))
 
@@ -231,7 +254,7 @@ ggplot(midwest[1:50,], aes(label = word, size = n)
 Unlike the previous lexicon analysis, using word clouds we can start to see distinct differences between the regions. The southern word cloud is much more centered on politics with the words "republicans" and "conservatives" standing out. On the other hand, the Western word cloud is much more focused on natural phenomenon with words like "heat", "weather", and "temperatures". Similar to the Western word cloud, the Midwestern word cloud is focused on nature with words like "forest", "tress", and "birds" being prominent. However, the Midwestern word cloud differentiates itself from the other two word clouds with the prominence of "scientists" and "researchers" which could indicate a more scientific perspective of climate change.
 
 # Term Frequency - Inverse Document Frequency for Regions
-```{r, echo=FALSE}
+```{r}
 # Term Frequency - Inverse Document Frequency (tf-idf)
 south <- read_lines("southern_region")
 south <- tibble(south)
