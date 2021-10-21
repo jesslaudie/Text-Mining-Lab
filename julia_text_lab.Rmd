@@ -130,8 +130,6 @@ table(west_sentiment_nrc$sentiment)
 table(midwest_sentiment_nrc$sentiment)
 ```
 
-Conclusion: For the Southern Region, I saw there were 
-
 # Plot of Sentiments for Different Regions
 ```{r}
 # Plot of Southern Region's Sentiment Range
@@ -183,7 +181,7 @@ ggplot(midwest[1:50,], aes(label = word, size = n)
   geom_text_wordcloud() +
   theme_minimal()
 ```
-Conclusion: For the Southern Region, words like "climate", "change", "global", "warming", "energy", "republicans", "conservatives", and "carbon" were among some of the more common occurring words in the articles from this region. For word sentiments for the Southern Region, there were 179 negative sentiments and 105 positive sentiments. This shows that there is a bit more negative language regarding climate change. The positive sentiments were higher than I expected, however. The reason the positive sentiments could be a bit higher may be due to the fact that the Southern region does not see climate change as an important of an issue compared to other regions. Because my region was the South, which does a large Republican population, I was not surprised to see the words "republicans" and "conservatives" occur often. I think seeing these words show that climate change is more of a political issue in this region. For example, the word cloud for the Western region did not have many words with a political connotation. 
+**Conclusion**: For the Southern Region, words like "climate", "change", "global", "warming", "energy", "republicans", "conservatives", and "carbon", were among some of the more common occurring words in the articles from this region. For word sentiments for the Southern Region, there were 179 negative sentiments and 105 positive sentiments. This shows that there is a bit more negative language regarding climate change. The positive sentiment number was a bit higher than I expected, however. The reason the positive sentiment could be a bit higher may be due to the fact that some individuals in the Southern region do not see climate change as an important of an issue compared to other regions. The Southern region has several Red states and despite changing beliefs over the years, Republicans have historically denied the gravity of climate change. This is why I think there is not as much of a difference between negative and positive sentiment compared to that of the Western region, for example. For many Republicans, climate change is viewed as a political issue. For this reason, I was not surprised to see the words "republicans" and "conservatives" in larger text on the word cloud. Many Republican politicians, such as President Donald Trump, have used concerning language about climate change, denying or downplaying the gravity of climate change. Some of these politicians have even blocked or rolled back policies to combat climate change. For the Southern region, which has a large Republican population, many individuals continue to see climate change as a political issue which is supported by the text mining I performed for this region. While I do think more people are becoming less and less skeptical of climate change, there is still a lot more work to do to combat climate change and change people's denial of the issue. For future analysis, it could be interesting to look at how sentiments have changed over time towards climate change, especially in the Southern region where there is more skepticism about climate change than other regions.
 
 # Term Frequency - Inverse Document Frequency for Regions
 ```{r}
@@ -224,10 +222,10 @@ total_words <- word_count %>%
 
 region_words <- left_join(word_count, total_words)
 
-View(region_words)
-
 region_words <- region_words %>%
   bind_tf_idf(word, region, n)
+
+region_words
 
 top10 <- region_words%>%
   arrange(desc(tf_idf))%>%
@@ -241,26 +239,3 @@ fig <- ggplot(top10, aes(tf_idf, word, fill = tf_idf)) +
        y = NULL)
 fig
 ```
-Conclusion:
-
-
-Congratulations you've successfully transferred from being a NBA 'quant' scout to a consultant specializing in US national sentiment! You've been hired by a non-profit in secret to track the level of support nationally and regionally for the Climate Change issues. The goal is to get a general idea of patterns associated with articles being written on the broad topic of Climate Change (you can also choose to select a sub-topic). In doing so your data science team has decided to explore periodicals from around the country in a effort to track the relative positive or negative sentiment and word frequencies. Luckily you have access to a world class library search engine call LexusNexus (NexusUni) that provides access to newspapers from around the country dating back decades. You'll first need to decided what words you want to track and what time might be interesting to begin your search. 
-
-You'll need to select several newspapers from different regions in the country limiting the search to 100 articles from each paper, run sentiment analysis with each newspaper serving as a corpus and then compare the level of positive or negative connotation associated with the outcomes. Also, work through tf-idf on each corpus (newspapers) and compare the differences between the distributions (5 to 6 newspapers should be fine)
-
-Your main goal (and the goal of all practicing data scientists!) is to translate this information into action. What patterns do you see, why do you believe this to be the case? What additional information might you want? Be as specific as possible, but keep in mind this is an initial exploratory effort...more analysis might be needed...but the result can and should advise the next steps you present to the firm. 
-
-
-Please submit a cleanly knitted HTML file describing in detail the steps you 
-took along the way, the results of your analysis and most importantly the implications/next steps you would recommend.  You will report your final 
-results and recommendations next week in class. This will be 5 minutes per group. 
-
-You will need also need to try to collaborate within your group via a GitHub repo, if you choose it would be fine to assign 1 or 2 regions/newspapers per group member, that can then be added to the repo individually. Create a main repo, everyone should work in this repo and submit independently using forking/pull requests. Select a repo owner that sets up access (read access) for the week, we will rotate owners next week. 
-Also, submit a link to your the GitHub repo (every group member can submit the same link). 
-
-
-Rstudio Guidance on Git and Github (Including Branching/Pull Requests): https://r-pkgs.org/git.html#git-branch
-
-
-Here is the link to the database search via the UVA Library that should lead you to LexusNexus (Now Nexas Uni)
-https://guides.lib.virginia.edu/az.php?a=l
