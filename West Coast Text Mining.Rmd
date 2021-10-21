@@ -18,7 +18,7 @@ library(textdata)
 I found 10 articles related to climate change in the West Coast. All of these articles are from the Los Angelos Times newspaper and were chosen based on word count and presence of the words "climate change". 
 
 ```{r}
-west_coast <- read_lines("~/Desktop/DS-3001/west_coast")
+west_coast <- read_lines("west_coast")
 
 west_coast <- tibble(west_coast)
 
@@ -82,7 +82,7 @@ ggplot(west_coast[1:50,], aes(label = word, size = n)
 ## Term Frequency - Inverse Document Frequency 
 
 ```{r}
-wc_raw = as.tibble(read_lines("~/Desktop/DS-3001/west_coast"))
+wc_raw = as.tibble(read_lines("west_coast"))
 
 data_prep <- function(x,y,z){
   i <- as_tibble(t(x))
